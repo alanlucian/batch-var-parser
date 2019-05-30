@@ -1,11 +1,13 @@
-const fs = require('fs')
+
 const path = require("path");
-const readline = require('readline');  
+const fs = require('fs')
+const LineByLineReader = require('line-by-line');
+
 
 
 function BatchVarParser(){
     let returnData = {};
-    let pausable = {};
+    let reader = {};
     var applyVarsIntoLine = (line, dp0)=>{
         line = line.replace('%~dp0',dp0);
         var vars = line.match(/%[a-zA-Z0-9-_]+%/g);
@@ -40,19 +42,12 @@ function BatchVarParser(){
         return new Promise((resolve,reject)=>{
             var dp0 = path.dirname(file);
             //var dataFile = fs.readFileSync( filePath , 'utf8');
-
-            pausable[file] = {
-                stream:fs.createReadStream(file)
+            var i = 
+            reader[file] = {
+                interface : new LineByLineReader( file )
             }
 
-            pausable[file].interface = readline.createInterface({  
-            //let readInterface = readline.createInterface({  
-                input: pausable[file].stream,
-                output: process.stdout,
-                console: false
-            });
-
-            pausable[file].interface.on('line', async (line)=>{
+            reader[file].interface.on('line', async (line)=>{
 
 
                 console.log(line);
@@ -67,14 +62,11 @@ function BatchVarParser(){
 
                 //CALLING external BATCH
                 if(line.match(/^ *CALL/i)){
-                    pausable[file].stream.pause();
-                    pausable[file].interface.pause();
-                    parseAdditionalBatch(line, dp0).then(()=>{
-                        
-                        pausable[file].interface.resume();
-                        pausable[file].stream.resume();
+                    reader[file].interface.pause();
+                    parseAdditionalBatch(line, dp0).then((d)=>{
+                        console.log(d);
+                        reader[file].interface.resume();
                     });
-                    
                     return;
                 }
 
@@ -87,17 +79,10 @@ function BatchVarParser(){
                 
             })
 
-            pausable[file].interface.on('close',(line)=>{
-                
+            reader[file].interface.on('end',(line)=>{
                 resolve(returnData)
-
             })
 
-            
-
-
-
-            
         });
     };
 

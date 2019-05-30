@@ -1,0 +1,30 @@
+{
+  "name": "batch-var-parser",
+  "version": "0.0.1",
+  "description": "Parse given batch file variables into json object",
+  "main": "src/index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alanlucian/batch-var-parser.git"
+  },
+  "keywords": [
+    "batch",
+    "variable",
+    "parse"
+  ],
+  "author": "alanlucian@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alanlucian/batch-var-parser/issues"
+  },
+  "homepage": "https://github.com/alanlucian/batch-var-parser#readme",
+  "dependencies": {
+    "line-by-line": "^0.1.6"
+  }
+}
