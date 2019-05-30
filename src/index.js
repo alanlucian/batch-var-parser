@@ -6,8 +6,10 @@ const LineByLineReader = require('line-by-line');
 
 
 function BatchVarParser(){
-    let returnData = {};
+    let returnData = new Map();
     let reader = {};
+
+
     var applyVarsIntoLine = (line, dp0)=>{
         line = line.replace('%~dp0',dp0);
         var vars = line.match(/%[a-zA-Z0-9-_]+%/g);
@@ -16,7 +18,9 @@ function BatchVarParser(){
         }
         vars.forEach(element => {
             var propertie = element.replace(/%/g, '');
-            line = line.replace(`${element}`,returnData[propertie]);
+            if( returnData.has(propertie)){
+                line = line.replace(`${element}`,returnData.get(propertie));
+            }
         });
 
         return line;
@@ -34,7 +38,7 @@ function BatchVarParser(){
         if (!fs.existsSync(file)) {
             throw new Error( `Corupted BATCH command ${file} does not exists ` );
         }
-        return this.extract(file);
+        return this.extract(file, false);
 
     }
 
@@ -48,10 +52,6 @@ function BatchVarParser(){
             }
 
             reader[file].interface.on('line', async (line)=>{
-
-
-                console.log(line);
-
                 // skip comments
                 if(line.match(/^ *::/i) ||line.match(/^ *REM/i) ){
                     return;
@@ -64,7 +64,6 @@ function BatchVarParser(){
                 if(line.match(/^ *CALL/i)){
                     reader[file].interface.pause();
                     parseAdditionalBatch(line, dp0).then((d)=>{
-                        console.log(d);
                         reader[file].interface.resume();
                     });
                     return;
@@ -75,7 +74,7 @@ function BatchVarParser(){
                     return;
                 }
                 var [m,key,value] = data;
-                returnData[key] = value;
+                returnData.set(key, value);
                 
             })
 
@@ -86,7 +85,11 @@ function BatchVarParser(){
         });
     };
 
-    this.extract = ( filePath )=>{
+    this.extract = ( filePath, reset = true )=>{
+        if( reset ){
+            returnData = new Map();
+            reader = {};
+        }
         return new Promise((resolve,reject)=>{
             if (!fs.existsSync(filePath)) {
                 reject( `file not found ${filePath}`);
