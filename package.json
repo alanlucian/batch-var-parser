@@ -1,6 +1,6 @@
 {
   "name": "batch-var-parser",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Parse given batch file variables into json object",
   "main": "src/index.js",
   "directories": {

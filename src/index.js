@@ -27,7 +27,7 @@ function BatchVarParser(){
 
     }
 
-    var parseAdditionalBatch = async ( line , baseDir )=>{
+    var parseAdditionalBatch = ( line , baseDir )=>{
 
         var file = line.match(/^ *CALL +([\w-\/\\.:]+)/i)
         file.shift();//remove match line
@@ -43,18 +43,22 @@ function BatchVarParser(){
     }
 
     var parseFileContent = ( file )=>{
-        return new Promise((resolve,reject)=>{
+        
             var dp0 = path.dirname(file);
-            //var dataFile = fs.readFileSync( filePath , 'utf8');
-            var i = 
+            var dataFile = fs.readFileSync( file , 'utf8');
+            /*var i = 
             reader[file] = {
                 interface : new LineByLineReader( file )
-            }
+            }*/
 
-            reader[file].interface.on('line', async (line)=>{
+            var lines  = dataFile.split("\n");
+            for(var l in lines){
+                var line = lines[l].replace('\r','');
+            //reader[file].interface.on('line', async (line)=>{
+
                 // skip comments
                 if(line.match(/^ *::/i) ||line.match(/^ *REM/i) ){
-                    return;
+                   continue ;
                 }
 
                 //Apply variables into line
@@ -62,27 +66,21 @@ function BatchVarParser(){
 
                 //CALLING external BATCH
                 if(line.match(/^ *CALL/i)){
-                    reader[file].interface.pause();
-                    parseAdditionalBatch(line, dp0).then((d)=>{
-                        reader[file].interface.resume();
-                    });
-                    return;
+                    parseAdditionalBatch(line, dp0);
+                    continue;
                 }
 
                 var data = line.match(/SET ([a-zA-Z0-9-_]+)= ?(.*)$/i);            
                 if( data == null ){
-                    return;
+                    continue;
                 }
                 var [m,key,value] = data;
                 returnData.set(key, value);
                 
-            })
+            //})
+            }
+            return returnData;
 
-            reader[file].interface.on('end',(line)=>{
-                resolve(returnData)
-            })
-
-        });
     };
 
     this.extract = ( filePath, reset = true )=>{
@@ -90,12 +88,10 @@ function BatchVarParser(){
             returnData = new Map();
             reader = {};
         }
-        return new Promise((resolve,reject)=>{
-            if (!fs.existsSync(filePath)) {
-                reject( `file not found ${filePath}`);
-            }
-            parseFileContent( filePath ).then(resolve)            
-        });        
+        if (!fs.existsSync(filePath)) {
+            throw new Error(  `file not found ${filePath}`);
+        }
+        return parseFileContent( filePath )
     }
 
 }
